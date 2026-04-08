@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChatShare Ultimate</title>
+  <style>
+    :root{
+      --bg:#313338;
+      --servers:#1e1f22;
+      --sidebar:#2b2d31;
+      --main:#313338;
+      --panel:#1e1f22;
+      --card:#232428;
+      --composer:#383a40;
+      --text:#f2f3f5;
+      --muted:#b5bac1;
+      --line:#3f4147;
+      --brand:#5865f2;
+      --brand2:#4752c4;
+      --green:#23a559;
+      --red:#da373c;
+      --yellow:#faa81a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+    button,input,select{font:inherit}
+    .layout{display:grid;grid-template-columns:80px 280px 1fr 330px;height:100vh}
+    .servers{background:var(--servers);padding:12px 10px;border-right:1px solid #202225;display:flex;flex-direction:column;align-items:center;gap:12px}
+    .server,.plus{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:#313338;font-weight:800}
+    .server.active{background:var(--brand)}
+    .plus{background:#233026;color:#3ba55d}
+    .sidebar{background:var(--sidebar);border-right:1px solid #202225;display:flex;flex-direction:column;min-width:0}
+    .sidebar-header,.right-header{padding:16px;border-bottom:1px solid var(--line);font-weight:800}
+    .scroll{overflow:auto;padding:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+    .section{font-size:12px;letter-spacing:.5px;color:#949ba4;text-transform:uppercase;font-weight:800;margin-bottom:8px}
+    .room-item{background:#35373c;border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .room-item.active{outline:2px solid var(--brand)}
+    .room-info{min-width:0}
+    .room-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tiny{font-size:12px;color:var(--muted)}
+    .icon-lock{opacity:.9}
+    .input, .composer input, .composer select{width:100%;background:#1e1f22;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;outline:none}
+    .input:focus, .composer input:focus{border-color:var(--brand)}
+    .row{display:flex;gap:10px}
+    .col{display:flex;flex-direction:column;gap:10px}
+    .btn{border:none;border-radius:10px;padding:10px 14px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer}
+    .btn:hover{background:var(--brand2)}
+    .btn.alt{background:#3f4147}
+    .btn.green{background:var(--green)}
+    .btn.red{background:var(--red)}
+    .main{display:grid;grid-template-rows:auto 1fr auto;min-width:0;background:var(--main)}
+    .topbar{height:57px;display:flex;justify-content:space-between;align-items:center;padding:0 16px;border-bottom:1px solid var(--line);background:var(--main);gap:16px}
+    .title{font-weight:800;font-size:18px}
+    .sub{font-size:13px;color:var(--muted)}
+    .messages{overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+    .welcome{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+    .message{display:flex;gap:12px;padding:8px 10px;border-radius:12px}
+    .message:hover{background:rgba(255,255,255,.03)}
+    .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--brand);font-weight:800;flex:0 0 auto}
+    .bubble{min-width:0;width:100%}
+    .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+    .name{font-weight:800}
+    .time{font-size:12px;color:var(--muted)}
+    .text{white-space:pre-wrap;word-break:break-word;line-height:1.5;color:#dbdee1}
+    .system{align-self:center;background:#232428;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:8px 12px;font-size:12px}
+    .composer-wrap{padding:16px;border-top:1px solid var(--line)}
+    .composer{background:var(--composer);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:12px}
+    .composer-grid{display:grid;grid-template-columns:1fr auto auto;gap:10px}
+    .dropzone{border:2px dashed #5b5f68;border-radius:16px;padding:14px;text-align:center;color:var(--muted);transition:.2s}
+    .dropzone.drag{border-color:var(--brand);background:rgba(88,101,242,.12);color:#e8ebff}
+    .progress{height:10px;background:#1e1f22;border-radius:999px;overflow:hidden;display:none}
+    .progress > div{height:100%;width:0;background:var(--green)}
+    .right{background:var(--sidebar);border-left:1px solid #202225;display:flex;flex-direction:column;min-width:0}
+    .file-card{background:#2b2d31;border:1px solid var(--line);border-radius:14px;padding:14px}
+    .file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .small-btn{border:none;border-radius:10px;padding:9px 12px;background:var(--brand);color:#fff;cursor:pointer;font-weight:700}
+    .small-btn.secondary{background:#3f4147}
+    .preview{margin-top:10px;border-radius:12px;max-width:100%;max-height:240px}
+    .pill{display:inline-block;background:#5865f226;border:1px solid #5865f255;color:#d7ddff;padding:6px 10px;border-radius:999px;font-size:12px}
+    .user{background:#35373c;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+    .hint{font-size:13px;color:var(--muted);line-height:1.5}
+    .hidden{display:none !important}
+    @media (max-width: 1220px){.layout{grid-template-columns:80px 280px 1fr}.right{display:none}}
+    @media (max-width: 860px){.layout{grid-template-columns:1fr}.servers,.sidebar,.right{display:none}.composer-grid{grid-template-columns:1fr}.topbar{height:auto;padding:12px;flex-direction:column;align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="servers">
+      <div class="server active">CS</div>
+      <div class="plus">+</div>
+    </aside>
+
+    <aside class="sidebar">
+      <div class="sidebar-header">ChatShare Ultimate</div>
+      <div class="scroll">
+        <div class="card">
+          <div class="section">Seu perfil</div>
+          <div class="col">
+            <input id="nickname" class="input" maxlength="24" placeholder="Seu nome" />
+            <button id="saveNickname" class="btn">Salvar nome</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section">Criar sala</div>
+          <div class="col">
+            <input id="newRoomName" class="input" placeholder="Nome da sala" />
+            <input id="newRoomPassword" class="input" placeholder="Senha opcional" />
+            <select id="newRoomExpiry" class="input">
+              <option value="1">Arquivos expiram em 1 dia</option>
+              <option value="3">Arquivos expiram em 3 dias</option>
+              <option value="7" selected>Arquivos expiram em 7 dias</option>
+              <option value="14">Arquivos expiram em 14 dias</option>
+              <option value="30">Arquivos expiram em 30 dias</option>
+            </select>
+            <button id="createRoom" class="btn green">Criar sala</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section">Salas</div>
+          <div id="roomsList"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div id="roomTitle" class="title">Escolha ou crie uma sala</div>
+          <div id="roomSubtitle" class="sub">Chat, arquivos, links e histórico salvo</div>
+        </div>
+        <div class="pill">Visual inspirado no Discord</div>
+      </div>
+
+      <div id="messages" class="messages">
+        <div class="welcome">
+          <h2 style="margin:0 0 8px">Tudo em um lugar</h2>
+          <div class="hint">
+            Esse projeto já vem com: salas privadas com senha, histórico salvo, drag & drop, barra de progresso,
+            preview de imagem e vídeo, links compartilháveis, limpeza automática por expiração e lista de usuários online.
+          </div>
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="composer">
+          <div class="composer-grid">
+            <input id="messageInput" placeholder="Mande uma mensagem" />
+            <label class="btn alt" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
+              Escolher arquivo
+              <input id="fileInput" type="file" class="hidden" />
+            </label>
+            <button id="sendMessage" class="btn">Enviar</button>
+          </div>
+          <div id="dropzone" class="dropzone">Arraste e solte um arquivo aqui</div>
+          <div class="row">
+            <button id="uploadBtn" class="btn green">Enviar arquivo</button>
+            <button id="clearSelected" class="btn alt">Limpar seleção</button>
+          </div>
+          <div id="selectedFile" class="hint">Nenhum arquivo selecionado.</div>
+          <div id="uploadProgress" class="progress"><div></div></div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="right">
+      <div class="right-header">Painel</div>
+      <div class="scroll">
+        <div class="card">
+          <div class="section">Sala atual</div>
+          <div id="currentRoomInfo" class="hint">Nenhuma sala conectada.</div>
+        </div>
+        <div class="card">
+          <div class="section">Usuários online</div>
+          <div id="onlineUsers"></div>
+        </div>
+        <div class="card">
+          <div class="section">Arquivos recentes</div>
+          <div id="recentFiles"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const els = {
+      nickname: document.getElementById("nickname"),
+      saveNickname: document.getElementById("saveNickname"),
+      newRoomName: document.getElementById("newRoomName"),
+      newRoomPassword: document.getElementById("newRoomPassword"),
+      newRoomExpiry: document.getElementById("newRoomExpiry"),
+      createRoom: document.getElementById("createRoom"),
+      roomsList: document.getElementById("roomsList"),
+      roomTitle: document.getElementById("roomTitle"),
+      roomSubtitle: document.getElementById("roomSubtitle"),
+      messages: document.getElementById("messages"),
+      messageInput: document.getElementById("messageInput"),
+      sendMessage: document.getElementById("sendMessage"),
+      fileInput: document.getElementById("fileInput"),
+      uploadBtn: document.getElementById("uploadBtn"),
+      clearSelected: document.getElementById("clearSelected"),
+      selectedFile: document.getElementById("selectedFile"),
+      uploadProgress: document.getElementById("uploadProgress"),
+      dropzone: document.getElementById("dropzone"),
+      onlineUsers: document.getElementById("onlineUsers"),
+      recentFiles: document.getElementById("recentFiles"),
+      currentRoomInfo: document.getElementById("currentRoomInfo"),
+    };
+
+    let state = {
+      nickname: localStorage.getItem("chatshare_nickname") || "",
+      roomSlug: localStorage.getItem("chatshare_roomSlug") || "",
+      roomPassword: localStorage.getItem("chatshare_roomPassword") || "",
+      roomName: "",
+      selectedFile: null,
+      recentFiles: []
+    };
+
+    els.nickname.value = state.nickname;
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text ?? "";
+      return div.innerHTML;
+    }
+    function initials(name) {
+      return (name || "?").trim().slice(0, 2).toUpperCase();
+    }
+    function fmtDate(ts) {
+      return new Date(ts).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
+    }
+    function fmtSize(bytes) {
+      if (!bytes && bytes !== 0) return "";
+      const mb = bytes / (1024 * 1024);
+      if (mb >= 1024) return (mb / 1024).toFixed(2) + " GB";
+      if (mb >= 1) return mb.toFixed(2) + " MB";
+      return (bytes / 1024).toFixed(1) + " KB";
+    }
+    function mediaPreview(file) {
+      if (!file || !file.mimetype) return "";
+      if (file.mimetype.startsWith("image/")) {
+        return `<img class="preview" src="${file.directUrl}" alt="preview" />`;
+      }
+      if (file.mimetype.startsWith("video/")) {
+        return `<video class="preview" src="${file.directUrl}" controls></video>`;
+      }
+      return "";
+    }
+    function addSystem(text) {
+      const div = document.createElement("div");
+      div.className = "system";
+      div.textContent = text;
+      els.messages.appendChild(div);
+      els.messages.scrollTop = els.messages.scrollHeight;
+    }
+    function renderMessage(message) {
+      const div = document.createElement("div");
+      div.className = "message";
+      let fileHtml = "";
+      if (message.type === "file" && message.file) {
+        const f = message.file;
+        fileHtml = `
+          <div class="file-card">
+            <div><strong>📎 ${escapeHtml(f.originalName)}</strong></div>
+            <div class="hint">Tamanho: ${fmtSize(f.size)} · Expira em ${fmtDate(f.expiresAt)}</div>
+            ${mediaPreview(f)}
+            <div class="file-actions">
+              <a class="small-btn" href="${f.shareUrl}" target="_blank">Abrir link</a>
+              <a class="small-btn secondary" href="${f.directUrl}" target="_blank" download>Baixar</a>
+              <button class="small-btn secondary" data-copy="${f.shareUrl}">Copiar link</button>
+            </div>
+          </div>`;
+      }
+      div.innerHTML = `
+        <div class="avatar">${escapeHtml(initials(message.nickname))}</div>
+        <div class="bubble">
+          <div class="meta">
+            <div class="name">${escapeHtml(message.nickname || "Anônimo")}</div>
+            <div class="time">${fmtDate(message.createdAt)}</div>
+          </div>
+          ${message.text ? `<div class="text">${escapeHtml(message.text)}</div>` : ""}
+          ${fileHtml}
+        </div>
+      `;
+      els.messages.appendChild(div);
+      els.messages.scrollTop = els.messages.scrollHeight;
+    }
+    function setMessages(messages) {
+      els.messages.innerHTML = "";
+      if (!messages.length) {
+        els.messages.innerHTML = `<div class="welcome"><h2 style="margin:0 0 8px">Sala vazia</h2><div class="hint">Mande a primeira mensagem ou envie um arquivo.</div></div>`;
+        return;
+      }
+      messages.forEach(renderMessage);
+    }
+    function renderRooms(rooms) {
+      els.roomsList.innerHTML = rooms.map(room => `
+        <div class="room-item ${room.slug === state.roomSlug ? "active" : ""}">
+          <div class="room-info">
+            <div class="room-name"># ${escapeHtml(room.name)}</div>
+            <div class="tiny">${room.isPrivate ? "Privada com senha" : "Aberta"} · expiração configurável</div>
+          </div>
+          <button class="btn alt join-room" data-slug="${room.slug}" data-private="${room.isPrivate ? "1" : "0"}">Entrar</button>
+        </div>
+      `).join("") || `<div class="hint">Nenhuma sala ainda.</div>`;
+    }
+    function renderOnline(users) {
+      els.onlineUsers.innerHTML = users.length
+        ? users.map(u => `<div class="user">${escapeHtml(u)}</div>`).join("")
+        : `<div class="hint">Ninguém online.</div>`;
+    }
+    function renderRecentFiles(files) {
+      state.recentFiles = files || [];
+      els.recentFiles.innerHTML = files.length ? files.map(file => `
+        <div class="file-card" style="margin-bottom:10px">
+          <div><strong>${escapeHtml(file.originalName)}</strong></div>
+          <div class="hint">${fmtSize(file.size)} · expira em ${fmtDate(file.expiresAt)}</div>
+          <div class="file-actions">
+            <a class="small-btn" href="${file.shareUrl}" target="_blank">Abrir</a>
+            <button class="small-btn secondary" data-copy="${file.shareUrl}">Copiar</button>
+          </div>
+        </div>
+      `).join("") : `<div class="hint">Nenhum arquivo recente.</div>`;
+    }
+    function saveLocal() {
+      localStorage.setItem("chatshare_nickname", state.nickname);
+      localStorage.setItem("chatshare_roomSlug", state.roomSlug || "");
+      localStorage.setItem("chatshare_roomPassword", state.roomPassword || "");
+    }
+    async function loadRooms() {
+      const res = await fetch("/api/rooms");
+      const data = await res.json();
+      renderRooms(data.rooms || []);
+    }
+    async function createRoom() {
+      const name = els.newRoomName.value.trim();
+      const password = els.newRoomPassword.value.trim();
+      const expiryDays = els.newRoomExpiry.value;
+      if (!name) return alert("Digite um nome para a sala.");
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, password, expiryDays })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "Erro ao criar sala.");
+      els.newRoomName.value = "";
+      els.newRoomPassword.value = "";
+      await loadRooms();
+      const roomPassword = password || "";
+      joinRoom(data.room.slug, roomPassword);
+    }
+    async function joinRoom(slug, passwordMaybe) {
+      let password = typeof passwordMaybe === "string" ? passwordMaybe : "";
+      const isPrivate = document.querySelector(`.join-room[data-slug="${slug}"]`)?.dataset.private === "1";
+      if (isPrivate && !password) {
+        password = prompt("Digite a senha da sala:") || "";
+      }
+      const res = await fetch("/api/rooms/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "Não foi possível entrar.");
+      state.roomSlug = data.room.slug;
+      state.roomPassword = password;
+      state.roomName = data.room.name;
+      saveLocal();
+      els.roomTitle.textContent = "# " + data.room.name;
+      els.roomSubtitle.textContent = data.room.isPrivate ? "Sala privada com senha" : "Sala aberta";
+      els.currentRoomInfo.innerHTML = `
+        <div><strong>${escapeHtml(data.room.name)}</strong></div>
+        <div class="hint">Slug: ${escapeHtml(data.room.slug)} · ${data.room.isPrivate ? "Privada" : "Aberta"}</div>`;
+      setMessages(data.messages || []);
+      renderRecentFiles((data.files || []).map(f => ({
+        ...f,
+        shareUrl: `${location.origin}/share/${f.id}`,
+        directUrl: `${location.origin}/download/${f.id}`
+      })));
+      socket.emit("join room", {
+        roomSlug: data.room.slug,
+        password,
+        nickname: state.nickname || "Anônimo"
+      });
+      loadRooms();
+    }
+    function sendMessage() {
+      if (!state.roomSlug) return alert("Entre em uma sala primeiro.");
+      const text = els.messageInput.value.trim();
+      if (!text) return;
+      socket.emit("chat message", { text });
+      els.messageInput.value = "";
+    }
+    function setSelectedFile(file) {
+      state.selectedFile = file || null;
+      els.selectedFile.textContent = state.selectedFile
+        ? `Arquivo selecionado: ${state.selectedFile.name} (${fmtSize(state.selectedFile.size)})`
+        : "Nenhum arquivo selecionado.";
+    }
+    function uploadSelected() {
+      if (!state.roomSlug) return alert("Entre em uma sala primeiro.");
+      if (!state.selectedFile) return alert("Escolha um arquivo primeiro.");
+      const form = new FormData();
+      form.append("file", state.selectedFile);
+      form.append("roomSlug", state.roomSlug);
+      form.append("roomPassword", state.roomPassword || "");
+      form.append("nickname", state.nickname || "Anônimo");
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/upload");
+      els.uploadProgress.style.display = "block";
+      els.uploadProgress.firstElementChild.style.width = "0%";
+      xhr.upload.onprogress = (e) => {
+        if (!e.lengthComputable) return;
+        const percent = (e.loaded / e.total) * 100;
+        els.uploadProgress.firstElementChild.style.width = percent.toFixed(1) + "%";
+      };
+      xhr.onload = () => {
+        els.uploadProgress.firstElementChild.style.width = "100%";
+        setTimeout(() => { els.uploadProgress.style.display = "none"; }, 500);
+        try {
+          const data = JSON.parse(xhr.responseText || "{}");
+          if (xhr.status >= 400) return alert(data.error || "Erro ao enviar.");
+          setSelectedFile(null);
+        } catch {
+          alert("Falha no envio.");
+        }
+      };
+      xhr.onerror = () => {
+        els.uploadProgress.style.display = "none";
+        alert("Erro no upload.");
+      };
+      xhr.send(form);
+    }
+
+    document.addEventListener("click", async (e) => {
+      const joinBtn = e.target.closest(".join-room");
+      const copyBtn = e.target.closest("[data-copy]");
+      if (joinBtn) {
+        joinRoom(joinBtn.dataset.slug);
+      }
+      if (copyBtn) {
+        try {
+          await navigator.clipboard.writeText(copyBtn.dataset.copy);
+          addSystem("Link copiado.");
+        } catch {
+          alert("Não foi possível copiar.");
+        }
+      }
+    });
+
+    els.saveNickname.addEventListener("click", () => {
+      state.nickname = els.nickname.value.trim().slice(0, 24) || "Anônimo";
+      els.nickname.value = state.nickname;
+      saveLocal();
+      addSystem("Nome salvo.");
+    });
+    els.createRoom.addEventListener("click", createRoom);
+    els.sendMessage.addEventListener("click", sendMessage);
+    els.messageInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendMessage(); });
+    els.fileInput.addEventListener("change", () => setSelectedFile(els.fileInput.files[0]));
+    els.uploadBtn.addEventListener("click", uploadSelected);
+    els.clearSelected.addEventListener("click", () => {
+      els.fileInput.value = "";
+      setSelectedFile(null);
+    });
+
+    ["dragenter","dragover"].forEach(type => {
+      els.dropzone.addEventListener(type, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        els.dropzone.classList.add("drag");
+      });
+    });
+    ["dragleave","drop"].forEach(type => {
+      els.dropzone.addEventListener(type, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        els.dropzone.classList.remove("drag");
+      });
+    });
+    els.dropzone.addEventListener("drop", (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file) setSelectedFile(file);
+    });
+
+    socket.on("room joined", (payload) => {
+      setMessages(payload.messages || []);
+      renderRecentFiles((payload.files || []).map(f => ({
+        ...f,
+        shareUrl: `${location.origin}/share/${f.id}`,
+        directUrl: `${location.origin}/download/${f.id}`
+      })));
+    });
+    socket.on("join error", (msg) => alert(msg));
+    socket.on("chat message", (message) => {
+      renderMessage(message);
+      if (message.type === "file" && message.file) {
+        renderRecentFiles([message.file, ...state.recentFiles].slice(0, 20));
+      }
+    });
+    socket.on("system message", addSystem);
+    socket.on("online users", renderOnline);
+
+    async function boot() {
+      state.nickname = state.nickname || "Anônimo";
+      els.nickname.value = state.nickname;
+      saveLocal();
+      await loadRooms();
+      if (state.roomSlug) {
+        joinRoom(state.roomSlug, state.roomPassword || "");
+      }
+    }
+    boot();
+  </script>
+</body>
+</html>

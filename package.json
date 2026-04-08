@@ -1,0 +1,14 @@
+{
+  "name": "chatshare-ultimate",
+  "version": "1.0.0",
+  "description": "Chat com visual estilo Discord, salas privadas, uploads, previews e links compartilháveis",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.1"
+  }
+}
